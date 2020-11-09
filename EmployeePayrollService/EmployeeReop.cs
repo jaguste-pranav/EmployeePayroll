@@ -177,5 +177,52 @@ namespace EmployeePayrollService
                 connection.Close();
             }
         }
+
+        /// <summary>
+        /// UC5
+        /// </summary>
+        /// <param name="model"></param>
+        public void RetrieveEmployeeBasedOnStartDate(EmployeeModel model)
+        {
+            try
+            {
+                connection = new SqlConnection(connectionstring);
+                SqlCommand command = new SqlCommand("Sp_RetrieveEmployeeBasedOnStartDate", connection);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.AddWithValue("@StartDate", model.StartDate);
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        model.EmployeeID = reader.GetInt32(0);
+                        model.EmployeeName = reader.GetString(1);
+                        model.Address = reader.GetString(2);
+                        model.Department = reader.GetString(3);
+                        model.BasicPay = Convert.ToDecimal(reader.GetInt32(4));
+                        model.StartDate = reader.GetDateTime(5);
+                        Console.WriteLine("{0},{1},{2},{3},{4},{5}", model.EmployeeID, model.EmployeeName, model.Address, model.Department, model.BasicPay, model.StartDate);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No rows Found");
+                }
+                reader.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                connection.Close();
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
     }
 }
