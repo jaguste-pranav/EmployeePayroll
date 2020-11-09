@@ -106,6 +106,7 @@ namespace EmployeePayrollService
                         return true;
                     }
                     return false;
+
                 }
             }
             catch (Exception e)
@@ -113,6 +114,63 @@ namespace EmployeePayrollService
                 Console.WriteLine(e.Message);
                 connection.Close();
                 return false;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        public int UpdateEmployee(SalaryDetailModel model)
+        {
+            int salary = 0;
+            try
+            {
+                using (connection)
+                {
+                    connection = new SqlConnection(connectionstring);
+                    SalaryDetailModel displayModel = new SalaryDetailModel();
+
+                    SqlCommand command = new SqlCommand("Sp_UpdateEmployee_Payroll", connection);
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    command.Parameters.AddWithValue("@S_id", model.SalaryId);
+                    //command.Parameters.AddWithValue("@EmployeeName", model.EmployeeName);
+                    //command.Parameters.AddWithValue("@Designation", model.Designation);
+                    command.Parameters.AddWithValue("@salary", model.Salary);
+                    command.Parameters.AddWithValue("@month", model.Month);
+                    command.Parameters.AddWithValue("@E_id", model.EmployeeId);
+
+                    connection.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            displayModel.EmployeeId = reader.GetInt32(0);
+                            displayModel.EmployeeName = reader.GetString(1);
+                            displayModel.Designation = reader.GetString(2);
+                            displayModel.Month = reader.GetString(3);
+                            displayModel.SalaryId = reader.GetInt32(4);
+                            displayModel.Salary = reader.GetInt32(5);
+
+                            salary = displayModel.Salary;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Data found");
+                    }
+                    reader.Close();
+                    return salary;
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                connection.Close();
+                return 0;
             }
             finally
             {
