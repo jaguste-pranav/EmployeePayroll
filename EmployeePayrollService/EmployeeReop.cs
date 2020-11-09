@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
@@ -7,20 +8,23 @@ namespace EmployeePayrollService
 {
     public class EmployeeRepo
     {
-        public static string connectionstring = @"Data Source=(Localdb)\MSSQLLocalDB;Initial Catalog=new_payroll_service;Integrated Security=True";
-        SqlConnection connection = new SqlConnection(connectionstring);
+        string connectionstring = @"Data Source=(Localdb)\MSSQLLocalDB;Initial Catalog=new_payroll_service;Integrated Security=True";
+
+        SqlConnection connection;
 
         public void GetAllEmployee()
         {
             try
             {
+                connection = new SqlConnection(connectionstring);
+
                 EmployeeModel model = new EmployeeModel();
 
-                using (this.connection)
+                using (connection)
                 {
                     string query = "select * from emp_payroll";
-                    SqlCommand sql = new SqlCommand(query, this.connection);
-                    this.connection.Open();
+                    SqlCommand sql = new SqlCommand(query, connection);
+                    connection.Open();
 
                     SqlDataReader dr = sql.ExecuteReader();
 
@@ -45,21 +49,74 @@ namespace EmployeePayrollService
 
                             Console.WriteLine("{0},{1},{2},{3},{4},{5}", (model.EmployeeID), model.EmployeeName, model.PhoneNumber, model.Address, model.Department, model.Gender);
                         }
-                        dr.Close();
                     }
                     else
                     {
                         Console.WriteLine("No data found");
                     }
+                    dr.Close();
+                    //this.connection.Close();
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                connection.Close();
             }
             finally
             {
-                this.connection.Close();
+                connection.Close();
+            }
+        }
+
+        /// <summary>
+        /// UC2 Add Employee Using Stored Procedures
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public bool AddEmployee(EmployeeModel model)
+        {
+            try
+            {
+                using (connection)
+                {
+                    connection = new SqlConnection(connectionstring);
+                    SqlCommand command = new SqlCommand("Sp_AddEmployee", connection);
+                    connection.Open();
+
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@EmpName", model.EmployeeName);
+                    command.Parameters.AddWithValue("@EmpPhoneNumber", model.PhoneNumber);
+                    command.Parameters.AddWithValue("@EmpAddress", model.Address);
+                    command.Parameters.AddWithValue("@Department", model.Department);
+                    command.Parameters.AddWithValue("@Gender", model.Gender);
+                    command.Parameters.AddWithValue("@BasicPay", model.BasicPay);
+                    command.Parameters.AddWithValue("@Deductions", model.Deductions);
+                    command.Parameters.AddWithValue("@TaxablePay", model.TaxablePay);
+                    command.Parameters.AddWithValue("@Tax", model.Tax);
+                    command.Parameters.AddWithValue("@NetPay", model.NetPay);
+                    command.Parameters.AddWithValue("@StartDate", model.StartDate);
+                    command.Parameters.AddWithValue("@City", model.City);
+                    command.Parameters.AddWithValue("@Country", model.Country);
+
+                    var result = command.ExecuteNonQuery();
+                    //this.connection.Close();
+                    if (result != 0)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                connection.Close();
+                return false;
+            }
+            finally
+            {
+                connection.Close();
             }
         }
     }
